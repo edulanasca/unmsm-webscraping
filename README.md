@@ -1,4 +1,4 @@
-# unmsm-webscrapping
+# unmsm-webscraping
 
 Script para extraer los datos del simulacro de admisión de la UNMSM 2020-I 
 
