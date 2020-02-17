@@ -116,9 +116,3 @@ class Unmsm:
         postulante['OBSERVACION'] = td[7].text
 
         return postulante
-        
-
-u = Unmsm('ResultSDP20201')
-u.exportarTodo()
-#u.exportarEap('Lima','Educación inicial')
-#u.exportarEap('Lima', 'Medicina Humana')
