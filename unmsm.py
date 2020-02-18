@@ -31,8 +31,8 @@ class Unmsm:
         """Obtiene todos los EAPs disponibles de acuerdo a la Sede"""
         return [eap for eap in self.__sedes[sede]]
 
-    def exportarEap(self, sede, eap, path=None):
-        """Exporta el csv correspondiente a la Sede y EAP"""
+    def importarEap(self, sede, eap, path=None):
+        """Importa el csv correspondiente a la Sede y EAP"""
         cod_sede_eap = self.__sedes[sede.upper()][eap.upper()]
         index_escuela = self.htmlContent(f'{self.__url}/{cod_sede_eap}/0.html')
         headers = [tag.b.unwrap().text if tag.b is not None else tag.text for tag in index_escuela.thead.tr.children]
@@ -43,13 +43,13 @@ class Unmsm:
             pags = [a['href'] for a in td_children ]
 
         if path is None:
-            self.__exportarCSV(self.__listarPostulantes(cod_sede_eap, pags), headers, sede, eap)
+            self.__crearCSV(self.__listarPostulantes(cod_sede_eap, pags), headers, sede, eap)
         else:
-            self.__exportarCSV(self.__listarPostulantes(cod_sede_eap, pags), headers, sede, eap, path)
+            self.__crearCSV(self.__listarPostulantes(cod_sede_eap, pags), headers, sede, eap, path)
 
 
-    def exportarTodo(self, path=None):
-        """Exporta todos los datos de la página organizados por Sede"""
+    def importarTodo(self, path=None):
+        """Importa todos los datos de la página organizados por Sede"""
         if path is None:
             path = self.concurso
         else:
@@ -61,7 +61,7 @@ class Unmsm:
                 os.makedirs(f'{path}/{sede}', exist_ok=True)
                 for eap in self.getEAPs(sede):
                     subdir_sede = os.path.join(path, sede)
-                    self.exportarEap(sede, eap, subdir_sede)
+                    self.importarEap(sede, eap, subdir_sede)
                     # time.sleep(1) produce 1s de retraso (para no sobrecargar de peticiones a la pag)
         except OSError as err:
             if err.errno != errno.EEXIST:
@@ -82,8 +82,8 @@ class Unmsm:
             self.__sedes[sede.text] = eap
 
 
-    def __exportarCSV(self, postulantes, columnas, sede, eap, path=None):
-        """Exporta el archivo csv"""
+    def __crearCSV(self, postulantes, columnas, sede, eap, path=None):
+        """Crea el archivo csv"""
         df = pd.DataFrame(postulantes, columns=columnas)
         if path is None:
             df.to_csv(f'{self.concurso}-{sede}-{eap}.csv')
