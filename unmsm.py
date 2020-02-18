@@ -89,30 +89,24 @@ class Unmsm:
             df.to_csv(os.path.join(path, f'{self.concurso}-{sede}-{eap}.csv'))
 
     def __listarPostulantes(self, cod_sede_eap, pags):
-        """Retorna una lista con los datos de todos los postulantes de la EAP"""
+        """Retorna una lista con los datos de cada postulante a la EAP"""
         postulantes = []
         for pag in pags:
             html = self.htmlContent(f'{self.__url}/{cod_sede_eap}/{pag}')
             if html.tbody is None:
                 postulantes.append([])
             else:
-                for tr in html.tbody.find_all('tr'):
-                    postulantes.append(self.__registrarPostulante(tr))
+                postulantes.append(self.__registrarPostulante(html.table))
 
         return postulantes
 
-    def __registrarPostulante(self, tr):
+    def __registrarPostulante(self, table):
         """Obtiene los datos de cada postulante"""
         postulante = {}
-        td = [tag for tag in tr.children]
-        postulante['SEDE'] = td[0].text
-        postulante['CODIGO'] = td[1].text
-        postulante['APELLIDOS Y NOMBRES'] = td[2].text
-        postulante['E.P'] = td[2].text
-        postulante['MERITO GENERAL'] = td[3].text
-        postulante['MERITO SEDE'] = td[4].text
-        postulante['MERITO EAP'] = td[5].text
-        postulante['MERITO SEDE E.P'] = td[6].text
-        postulante['OBSERVACION'] = td[7].text
+        th = [tag.b.unwrap() if tag.b is not None else tag for tag in table.thead.tr.children]
+        td = [tag for tag in table.tbody.tr.children]
+
+        for header, content in zip(th,td):
+            postulante[header.text] = content.text
 
         return postulante
