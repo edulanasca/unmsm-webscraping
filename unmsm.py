@@ -16,13 +16,10 @@ class Unmsm:
 
     def htmlContent(self, url):
         """Retorna la instancia de BeautifulSoup"""
-        try:
-            response = requests.get(url)
-            response.raise_for_status
-        except HTTPError as http_err:
-            return f'HTTP error ocurred: {http_err}'
-        except Exception as err:
-            return f'Error ocurred: {err}'
+        response = requests.get(url)
+        if not response.ok:
+            response.raise_for_status()
+            return None
         else:
             return BeautifulSoup(response.content, "lxml")
 
@@ -38,6 +35,7 @@ class Unmsm:
         """Exporta el csv correspondiente a la Sede y EAP"""
         cod_sede_eap = self.__sedes[sede.upper()][eap.upper()]
         index_escuela = self.htmlContent(f'{self.__url}/{cod_sede_eap}/0.html')
+        headers = [tag.b.unwrap().text if tag.b is not None else tag.text for tag in index_escuela.thead.tr.children]
         if index_escuela.tfoot is None:
             pags = ['0.html']
         else:
@@ -45,20 +43,24 @@ class Unmsm:
             pags = [a['href'] for a in td_children ]
 
         if path is None:
-            self.__exportarCSV(self.__listarPostulantes(cod_sede_eap, pags), sede, eap)
+            self.__exportarCSV(self.__listarPostulantes(cod_sede_eap, pags), headers, sede, eap)
         else:
-            self.__exportarCSV(self.__listarPostulantes(cod_sede_eap, pags), sede, eap, path)
+            self.__exportarCSV(self.__listarPostulantes(cod_sede_eap, pags), headers, sede, eap, path)
 
 
-    def exportarTodo(self):
+    def exportarTodo(self, path=None):
         """Exporta todos los datos de la página organizados por Sede"""
+        if path is None:
+            path = self.concurso
+        else:
+            path = os.path.join(path, self.concurso)
+
         try:
-            os.mkdir(self.concurso)
+            os.mkdir(path)
             for sede in self.getSedes():
-                os.makedirs(f'{self.concurso}/{sede}', exist_ok=True)
+                os.makedirs(f'{path}/{sede}', exist_ok=True)
                 for eap in self.getEAPs(sede):
-                    root = self.concurso
-                    subdir_sede = os.path.join(root, sede)
+                    subdir_sede = os.path.join(path, sede)
                     self.exportarEap(sede, eap, subdir_sede)
                     # time.sleep(1) produce 1s de retraso (para no sobrecargar de peticiones a la pag)
         except OSError as err:
@@ -80,9 +82,9 @@ class Unmsm:
             self.__sedes[sede.text] = eap
 
 
-    def __exportarCSV(self, postulantes, sede, eap, path=None):
+    def __exportarCSV(self, postulantes, columnas, sede, eap, path=None):
         """Exporta el archivo csv"""
-        df = pd.DataFrame(postulantes)
+        df = pd.DataFrame(postulantes, columns=columnas)
         if path is None:
             df.to_csv(f'{self.concurso}-{sede}-{eap}.csv')
         else:
@@ -90,23 +92,19 @@ class Unmsm:
 
     def __listarPostulantes(self, cod_sede_eap, pags):
         """Retorna una lista con los datos de cada postulante a la EAP"""
-        postulantes = []
         for pag in pags:
             html = self.htmlContent(f'{self.__url}/{cod_sede_eap}/{pag}')
             if html.tbody is None:
-                postulantes.append([])
+                return []
             else:
-                postulantes.append(self.__registrarPostulante(html.table))
+                return self.__registrarPostulante(html.table)
 
-        return postulantes
 
     def __registrarPostulante(self, table):
         """Obtiene los datos de cada postulante"""
-        postulante = {}
-        th = [tag.b.unwrap() if tag.b is not None else tag for tag in table.thead.tr.children]
-        td = [tag for tag in table.tbody.tr.children]
+        postulantes = []
+        
+        for tr in table.tbody.find_all('tr'):
+            postulantes.append([info_postulante.text for info_postulante in tr.children])
 
-        for header, content in zip(th,td):
-            postulante[header.text] = content.text
-
-        return postulante
+        return postulantes
