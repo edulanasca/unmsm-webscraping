@@ -29,7 +29,7 @@ class Unmsm:
 
     def getEAPs(self, sede):
         """Obtiene todos los EAPs disponibles de acuerdo a la Sede"""
-        return [eap for eap in self.__sedes[sede]]
+        return [eap for eap in self.__sedes[sede.upper()]]
 
     def importarEap(self, sede, eap, path=None):
         """Importa el csv correspondiente a la Sede y EAP"""
@@ -86,25 +86,29 @@ class Unmsm:
         """Crea el archivo csv"""
         df = pd.DataFrame(postulantes, columns=columnas)
         if path is None:
-            df.to_csv(f'{self.concurso}-{sede}-{eap}.csv')
+            df.to_csv(f'{self.concurso}-{sede}-{eap}.csv', index=False)
         else:
-            df.to_csv(os.path.join(path, f'{self.concurso}-{sede}-{eap}.csv'))
+            df.to_csv(os.path.join(path, f'{self.concurso}-{sede}-{eap}.csv'), index=False)
+
 
     def __listarPostulantes(self, cod_sede_eap, pags):
         """Retorna una lista con los datos de cada postulante a la EAP"""
+        postulantes = []
         for pag in pags:
             html = self.htmlContent(f'{self.__url}/{cod_sede_eap}/{pag}')
             if html.tbody is None:
-                return []
+                postulantes += []
             else:
-                return self.__registrarPostulante(html.table)
-
-
-    def __registrarPostulante(self, table):
-        """Obtiene los datos de cada postulante"""
-        postulantes = []
-        
-        for tr in table.tbody.find_all('tr'):
-            postulantes.append([info_postulante.text for info_postulante in tr.children])
+                postulantes += self.__registrarPostulante(html.table.tbody)
 
         return postulantes
+
+
+    def __registrarPostulante(self, body):
+        """Obtiene los datos de cada postulante"""
+        postulante = []
+        
+        for tr in body.find_all('tr'):
+            postulante.append([info_postulante.text for info_postulante in tr.children])
+
+        return postulante
