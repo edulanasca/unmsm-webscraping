@@ -1,0 +1,18 @@
+    def __validarEntrada(self, entrada, opciones):
+        """Retorna la entrada aceptada por el usuario"""
+        entrada = entrada.upper()
+        if entrada in opciones:
+            return entrada
+        else: 
+            matches = get_close_matches(entrada, opciones, n=5, cutoff=0.5)
+            if len(matches) == 0:
+                raise Exception('Entrada no valida')
+                return None
+            else:
+                print('¿Quisiste escribir ...?')
+                for i in range(len(matches)):
+                    print(f'{i+1}. {matches[i]}')
+                return matches[int(input())-1]
+
+ResultSDP20201 9 32' -> 2 56'
+ResSimulacroPre 01:54.005087

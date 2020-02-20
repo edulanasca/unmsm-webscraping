@@ -14,6 +14,17 @@ Si las librerias no se instalan correctamente
 pip install -r requirements.txt --no-index --find-links file://tmp/packages
 ```
 
+## Data disponible
+
+Fuente 1: [ResultSDP20201](http://unmsm.claro.net.pe/ResultSDP20201/index.html)
+Fuente 2: [ResSimulacroPre](http://unmsm.claro.net.pe/ResSimulacroPre/index.html)
+
+```
+from unmsm import Unmsm
+data = Unmsm('ResultSDP20201')
+data.importarTodo() # Importará todos los resultados
+```
+
 ## Contribuir
 
 Pull requests bienvenidos. 
