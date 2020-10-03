@@ -31,3 +31,7 @@ Pull requests bienvenidos.
 Para cambios importantes, abra primero un problema para analizar qué le gustaría cambiar.
 
 Asegúrese de actualizar las pruebas según corresponda.
+
+## Contributors
+
+Estiven Lucas
